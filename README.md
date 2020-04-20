@@ -30,7 +30,7 @@ Now, we generate multiple plaintext pairs with the correct differential and encr
 ## How to use
 
 ### Example  
-There is two examples. The `break-basic_SPN.py` and the `break-easy1.py` file.  
+There are two examples. The `break-basic_SPN.py` and the `break-easy1.py` file.  
 
 ### Functions you may want to use
 
