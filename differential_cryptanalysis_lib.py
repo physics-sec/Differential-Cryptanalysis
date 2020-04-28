@@ -259,8 +259,16 @@ def get_diff_characteristics(diff_chr_table, current_states=None, depth=1):
                         new_bits = elem['to'][destination]
                         entry['state'][destination] += new_bits
 
-                # update the next_states
-                next_states.append( entry )
+
+                # calculate the resulting Probability
+                biases = entry['probabilities']
+                resulting_bias = 1
+                for _, _, bias in biases:
+                    resulting_bias *= bias
+                resulting_bias *= 100
+                if resulting_bias >= MIN_PROB:
+                    # update the next_states
+                    next_states.append( entry )
 
 
         return get_diff_characteristics(diff_chr_table, next_states, depth + 1)
