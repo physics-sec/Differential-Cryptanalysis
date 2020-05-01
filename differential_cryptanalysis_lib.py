@@ -67,7 +67,8 @@ def reduce_table(table):
     new_table = []
     for dx in range(ssize):
         for dy in range(ssize):
-            if table[dx][dy] > 0:
+            prob = (table[dx][dy]/ssize) * 100
+            if prob >= MIN_PROB:
                 new_table.append( [dx, dy, table[dx][dy]/ssize] )
 
     # each element consist in dx, dy and the probability
@@ -184,7 +185,11 @@ def get_diff_characteristics(diff_chr_table, current_states=None, depth=1):
             curr_pos = current_state['state']
 
             # calculate all possible moves from 'curr_sbox'
+            total_combinations = 1
+            start_sboxes = {}
             possible_step_per_sbox = {}
+            num_possible_step_per_sbox = {}
+            num_start_sboxes = 0
             for curr_sbox in curr_pos:
 
                 inputs  = curr_pos[curr_sbox]
@@ -202,40 +207,39 @@ def get_diff_characteristics(diff_chr_table, current_states=None, depth=1):
 
                     possible_steps.append(step)
 
-                possible_step_per_sbox[curr_sbox] = possible_steps
+
+                if len(possible_steps) > 0:
+                    total_combinations *= len(possible_steps)
+                    possible_step_per_sbox[curr_sbox] = possible_steps
+                    start_sboxes[num_start_sboxes] = curr_sbox
+                    num_possible_step_per_sbox[curr_sbox] = len(possible_steps)
+                    num_start_sboxes += 1
 
             # combine all the possible choises of each sbox in all possible ways
             # for example, if there are 2 sboxes and each has 4 possible moves
             # then calculate all 16 (4x4) possible combinations.
 
+
             possible_steps_combinations = []
 
-            # initialize the possible_steps_combinations array
-            # with all the first sbox's possible steps
-            first_sbox = list(possible_step_per_sbox.keys())[0]
-            for possible_step in possible_step_per_sbox[first_sbox]:
-                step = possible_step
-                step['from'] = [depth, first_sbox]
-                possible_steps_combinations.append( [step] )
+            for comb_num in range(total_combinations):
+                new_comb = []
+                new_comb.append( possible_step_per_sbox[start_sboxes[0]][comb_num % num_possible_step_per_sbox[start_sboxes[0]]] )
+                for sbox in start_sboxes:
+                    if sbox == 0:
+                        continue
+                    real_sbox = start_sboxes[sbox]
 
-            # for each 'curr_sbox' that is not 'first_sbox'...
-            for curr_sbox in possible_step_per_sbox:
-                if curr_sbox == first_sbox:
-                    continue
+                    mod = 1
+                    for prev_sbox in range(sbox):
+                        mod *= num_possible_step_per_sbox[start_sboxes[prev_sbox]]
 
-                # save the combinations calcualted so far
-                combinations_so_far = possible_steps_combinations
-                possible_steps_combinations = []
+                    index = (comb_num / mod) % num_possible_step_per_sbox[real_sbox]
+                    index = int(index)
 
-                # add each curr_sbox's possible step to the possible_steps_combinations array
-                for possible_step in possible_step_per_sbox[curr_sbox]:
+                    new_comb.append( possible_step_per_sbox[real_sbox][index] )
+                possible_steps_combinations.append(new_comb)
 
-                    for step_taken in combinations_so_far:
-
-                        possible_step['from'] = [depth, curr_sbox]
-                        add_step = step_taken.copy()
-                        add_step.append(possible_step)
-                        possible_steps_combinations.append( add_step )
 
             # now, for each combination, check to which sboxes we reached and what are their inputs
             # this will be the next state
@@ -282,7 +286,7 @@ def analize_cipher():
     table_sorted = sorted(table, key=lambda elem: fabs(elem[2]), reverse=True)
 
     # take the best max_size results (so that the following algorithm finishes quickly)
-    max_size = 50
+    max_size = 1000
     table_len = len(table_sorted)
     if table_len > max_size:
         print('\n[*] reducing bias table size from {:d} to {:d}\n'.format(table_len, max_size))
