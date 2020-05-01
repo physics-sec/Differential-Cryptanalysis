@@ -148,6 +148,8 @@ def get_diff_characteristics(diff_chr_table, current_states=None, depth=1):
     if depth == NUM_ROUNDS:
         # delete elements that involve more than MAX_BLOCKS_TO_BF final sboxes
         current_states = [elem for elem in current_states if len(elem['state']) <= MAX_BLOCKS_TO_BF]
+        if len(current_states) == 0:
+            exit('No differential characteristic found! May be MIN_PROB is too high or MAX_BLOCKS_TO_BF too low.')
         # return the differential characteristics that reach to no more than MAX_BLOCKS_TO_BF sboxes
         return current_states
 
@@ -214,6 +216,9 @@ def get_diff_characteristics(diff_chr_table, current_states=None, depth=1):
                     start_sboxes[num_start_sboxes] = curr_sbox
                     num_possible_step_per_sbox[curr_sbox] = len(possible_steps)
                     num_start_sboxes += 1
+
+            if total_combinations == 0:
+                continue
 
             # combine all the possible choises of each sbox in all possible ways
             # for example, if there are 2 sboxes and each has 4 possible moves
